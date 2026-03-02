@@ -1,0 +1,26 @@
+meta {
+  name: login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{serverUrl}}/api/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": {{email}},
+    "password": {{password}}
+  }
+}
+
+tests {
+  const response = res.getBody();
+  
+  if (response && response.token) {
+    bru.setEnvVar("authToken", response.token);
+  }
+}

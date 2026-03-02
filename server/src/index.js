@@ -10,6 +10,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import yaml from "js-yaml";
+// Import routes
+import authRoutes from "./user/route/auth.routes.js";
 
 dotenv.config();
 
@@ -59,6 +61,7 @@ app.get("/healthz", (req, res) => {
 
 // API routes
 // Public auth routes
+app.use("/api/auth", authRoutes);
 
 // Routes for OAuth integrations
 
