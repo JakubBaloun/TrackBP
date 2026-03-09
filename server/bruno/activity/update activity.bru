@@ -1,0 +1,23 @@
+meta {
+  name: update activity
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{serverUrl}}/api/activities/{{activityId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}
+
+body:json {
+  {
+    "title": "Morning Run",
+    "description": "Great workout!",
+    "feeling": 5
+  }
+}

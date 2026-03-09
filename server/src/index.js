@@ -12,6 +12,8 @@ import { fileURLToPath } from "url";
 import yaml from "js-yaml";
 // Import routes
 import authRoutes from "./user/route/auth.routes.js";
+import polarRoutes from "./integration/route/polar.routes.js";
+import activityRoutes from "./activity/route/activity.routes.js";
 
 dotenv.config();
 
@@ -64,8 +66,10 @@ app.get("/healthz", (req, res) => {
 app.use("/api/auth", authRoutes);
 
 // Routes for OAuth integrations
+app.use("/api", polarRoutes);
 
 // Routes for activities
+app.use("/api/activities", activityRoutes);
 
 //404 fallback for unknown endpoints
 app.use((req, res, next) => {

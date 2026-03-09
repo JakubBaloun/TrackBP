@@ -1,0 +1,15 @@
+meta {
+  name: status
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{serverUrl}}/api/polar/status
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}

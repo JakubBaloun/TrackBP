@@ -1,0 +1,15 @@
+meta {
+  name: sync data from polar
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{serverUrl}}/api/activities/sync
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}

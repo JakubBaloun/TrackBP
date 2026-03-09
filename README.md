@@ -19,7 +19,6 @@ Commands to be added once package.json is configured. Expected patterns:
 - `npm install` - Install dependencies
 - `npm run dev` - Start development server
 - `npm test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
 
 ## Environment
 

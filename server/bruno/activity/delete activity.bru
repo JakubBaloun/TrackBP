@@ -1,0 +1,15 @@
+meta {
+  name: delete activity
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{serverUrl}}/api/activities/{{activityId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{authToken}}
+}

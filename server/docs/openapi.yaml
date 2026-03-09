@@ -1,19 +1,28 @@
 openapi: 3.0.3
 info:
   title: TrackBP API
-  description: Activities tracking API for bachelor project
+  description: Sports activities tracking API for bachelor thesis
   version: 1.0.0
 
 servers:
   - url: http://localhost:3000
     description: Development server
 
+tags:
+  - name: System
+    description: Health check and system endpoints
+  - name: Auth
+    description: User authentication
+  - name: Polar
+    description: Polar integration (OAuth, data fetching)
+  - name: Activities
+    description: Activity management
+
 paths:
   /healthz:
     get:
       summary: Health check
-      tags:
-        - System
+      tags: [System]
       responses:
         '200':
           description: Server is healthy
@@ -32,11 +41,11 @@ paths:
                     type: string
                     format: date-time
 
+  # ==================== AUTH ====================
   /api/auth/register:
     post:
       summary: Register a new user
-      tags:
-        - Auth
+      tags: [Auth]
       requestBody:
         required: true
         content:
@@ -60,8 +69,7 @@ paths:
   /api/auth/login:
     post:
       summary: Login user
-      tags:
-        - Auth
+      tags: [Auth]
       requestBody:
         required: true
         content:
@@ -85,8 +93,7 @@ paths:
   /api/auth/me:
     get:
       summary: Get current user profile
-      tags:
-        - Auth
+      tags: [Auth]
       security:
         - bearerAuth: []
       responses:
@@ -96,6 +103,272 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== POLAR ====================
+  /api/polar/connect:
+    get:
+      summary: Get Polar OAuth authorization URL
+      description: Returns URL to redirect user for Polar account authorization
+      tags: [Polar]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authorization URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authorizationUrl:
+                    type: string
+                    example: https://flow.polar.com/oauth2/authorization?client_id=...
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/polar/callback:
+    get:
+      summary: Polar OAuth callback
+      description: Handles OAuth callback from Polar, exchanges code for token
+      tags: [Polar]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: User ID passed during authorization
+        - name: error
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirects to frontend dashboard
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/polar/status:
+    get:
+      summary: Get Polar connection status
+      tags: [Polar]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/polar/exercises:
+    get:
+      summary: Get exercises directly from Polar API
+      description: Fetches raw exercise data from Polar (for debugging/testing)
+      tags: [Polar]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Raw Polar exercises data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/polar/exercise/{id}:
+    get:
+      summary: Get single exercise from Polar API
+      tags: [Polar]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Raw Polar exercise data
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== ACTIVITIES ====================
+  /api/activities:
+    get:
+      summary: List user's activities
+      tags: [Activities]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sport
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivitySummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/activities/sync:
+    post:
+      summary: Sync activities from Polar
+      description: Fetches new activities from Polar and saves them to database
+      tags: [Activities]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/IntegrationError'
+
+  /api/activities/stats:
+    get:
+      summary: Get activity statistics
+      description: Returns aggregated stats (totals, this month, sports distribution, trends)
+      tags: [Activities]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Activity statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/activities/{id}:
+    get:
+      summary: Get activity detail
+      description: Returns full activity with samples, zones, and route
+      tags: [Activities]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update activity
+      description: Update title, description, or feeling (1-5)
+      tags: [Activities]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityUpdate'
+      responses:
+        '200':
+          description: Updated activity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete activity (soft delete)
+      tags: [Activities]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Activity deleted successfully
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -116,9 +389,7 @@ components:
           type: string
         message:
           type: string
-      required:
-        - error
-        - message
+      required: [error, message]
 
     RegisterRequest:
       type: object
@@ -133,9 +404,7 @@ components:
           minLength: 8
           description: Must contain uppercase, lowercase, and number
           example: SecurePass123
-      required:
-        - email
-        - password
+      required: [email, password]
 
     RegisterResponse:
       type: object
@@ -149,7 +418,6 @@ components:
         email:
           type: string
           format: email
-          example: user@example.com
 
     LoginRequest:
       type: object
@@ -157,14 +425,10 @@ components:
         email:
           type: string
           format: email
-          example: user@example.com
         password:
           type: string
           format: password
-          example: SecurePass123
-      required:
-        - email
-        - password
+      required: [email, password]
 
     LoginResponse:
       type: object
@@ -172,24 +436,217 @@ components:
         token:
           type: string
           description: JWT token
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
     UserProfile:
       type: object
       properties:
         id:
           type: string
-          example: 507f1f77bcf86cd799439011
         email:
           type: string
           format: email
-          example: user@example.com
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+
+    ConnectionStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        providerUserId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        meta:
+          type: object
+          properties:
+            hasConnection:
+              type: boolean
+            isExpired:
+              type: boolean
+
+    SyncResult:
+      type: object
+      properties:
+        syncedCount:
+          type: integer
+        failedCount:
+          type: integer
+        totalFetched:
+          type: integer
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              error:
+                type: string
+
+    ActivitySummary:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        sport:
+          type: string
+        detailedSport:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Duration in seconds
+        stats:
+          $ref: '#/components/schemas/ActivityStats_inline'
+        feeling:
+          type: integer
+          minimum: -1
+          maximum: 5
+
+    ActivityDetail:
+      allOf:
+        - $ref: '#/components/schemas/ActivitySummary'
+        - type: object
+          properties:
+            samples:
+              type: object
+              properties:
+                heartRate:
+                  type: array
+                  items:
+                    type: integer
+                speed:
+                  type: array
+                  items:
+                    type: number
+                cadence:
+                  type: array
+                  items:
+                    type: integer
+            zones:
+              type: array
+              items:
+                $ref: '#/components/schemas/Zone'
+            route:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [LineString]
+                coordinates:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      type: number
+                    minItems: 2
+                    maxItems: 2
+
+    ActivityUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        feeling:
+          type: integer
+          minimum: 1
+          maximum: 5
+
+    ActivityStats_inline:
+      type: object
+      properties:
+        calories:
+          type: integer
+        distance:
+          type: number
+        avgHeartRate:
+          type: integer
+        maxHeartRate:
+          type: integer
+
+    ActivityStats:
+      type: object
+      properties:
+        totals:
+          type: object
+          properties:
+            totalActivities:
+              type: integer
+            totalDuration:
+              type: integer
+            totalDistance:
+              type: number
+            totalCalories:
+              type: integer
+        thisMonth:
+          type: object
+          properties:
+            count:
+              type: integer
+            distance:
+              type: number
+            duration:
+              type: integer
+            calories:
+              type: integer
+        sportsDistribution:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              count:
+                type: integer
+              distance:
+                type: number
+              duration:
+                type: integer
+        recentTrend:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+                description: Date (YYYY-MM-DD)
+              dailyCalories:
+                type: integer
+              dailyDistance:
+                type: number
+              dailyDuration:
+                type: integer
+              activitiesCount:
+                type: integer
+
+    Zone:
+      type: object
+      properties:
+        index:
+          type: integer
+          minimum: 0
+          maximum: 4
+        lowerLimit:
+          type: integer
+        upperLimit:
+          type: integer
+        duration:
+          type: integer
+          description: Time in zone (seconds)
 
   responses:
     BadRequest:
@@ -201,6 +658,7 @@ components:
           example:
             error: BadRequestError
             message: Email format is invalid
+
     Unauthorized:
       description: Unauthorized
       content:
@@ -210,6 +668,7 @@ components:
           example:
             error: UnauthorizedError
             message: Invalid credentials
+
     NotFound:
       description: Not found
       content:
@@ -218,7 +677,8 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             error: NotFoundError
-            message: User not found
+            message: Resource not found
+
     Conflict:
       description: Conflict
       content:
@@ -228,6 +688,7 @@ components:
           example:
             error: ConflictError
             message: User with this email already exists
+
     TooManyRequests:
       description: Too many requests
       content:
@@ -238,3 +699,13 @@ components:
               message:
                 type: string
                 example: Too many login attempts, try again in 15 min.
+
+    IntegrationError:
+      description: External service error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: IntegrationError
+            message: Failed to communicate with Polar
