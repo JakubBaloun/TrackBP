@@ -116,7 +116,7 @@ export const syncPolarActivities = async (userId) => {
 };
 
 export const getUserActivities = async (userId, filters = {}) => {
-  const { limit = 20, sport, dateFrom, dateTo } = filters;
+  const { limit = 20, offset = 0, sport, dateFrom, dateTo } = filters;
 
   const query = { userId, isDeleted: false };
 
@@ -130,11 +130,15 @@ export const getUserActivities = async (userId, filters = {}) => {
     if (dateTo) query.startTime.$lte = new Date(dateTo);
   }
 
-  const activities = await Activity.find(query)
-    .sort({ startTime: -1 })
-    .limit(parseInt(limit));
+  const [activities, total] = await Promise.all([
+    Activity.find(query)
+      .sort({ startTime: -1 })
+      .skip(parseInt(offset))
+      .limit(parseInt(limit)),
+    Activity.countDocuments(query),
+  ]);
 
-  return activities;
+  return { activities, total, limit: parseInt(limit), offset: parseInt(offset) };
 };
 
 export const getActivityById = async (activityId, userId) => {

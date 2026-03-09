@@ -115,8 +115,9 @@ describe("Activity Routes", () => {
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(2);
-      expect(res.body[0].externalId).toBe("act-2"); // sorted by startTime desc
+      expect(res.body.activities).toHaveLength(2);
+      expect(res.body.total).toBe(2);
+      expect(res.body.activities[0].externalId).toBe("act-2"); // sorted by startTime desc
     });
 
     it("should filter by sport", async () => {
@@ -126,8 +127,8 @@ describe("Activity Routes", () => {
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
-      expect(res.body[0].sport).toBe("RUNNING");
+      expect(res.body.activities).toHaveLength(1);
+      expect(res.body.activities[0].sport).toBe("RUNNING");
     });
 
     it("should filter by date range", async () => {
@@ -137,7 +138,7 @@ describe("Activity Routes", () => {
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
+      expect(res.body.activities).toHaveLength(1);
     });
 
     it("should respect limit parameter", async () => {
@@ -147,7 +148,20 @@ describe("Activity Routes", () => {
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(1);
+      expect(res.body.activities).toHaveLength(1);
+      expect(res.body.total).toBe(2);
+    });
+
+    it("should support offset parameter", async () => {
+      const res = await request(app)
+        .get("/api/activities")
+        .query({ limit: 1, offset: 1 })
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.activities).toHaveLength(1);
+      expect(res.body.activities[0].externalId).toBe("act-1");
+      expect(res.body.offset).toBe(1);
     });
 
     it("should return 401 without authorization", async () => {
@@ -171,8 +185,8 @@ describe("Activity Routes", () => {
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(2);
-      expect(res.body.find((a) => a.externalId === "other-act")).toBeUndefined();
+      expect(res.body.activities).toHaveLength(2);
+      expect(res.body.activities.find((a) => a.externalId === "other-act")).toBeUndefined();
     });
   });
 

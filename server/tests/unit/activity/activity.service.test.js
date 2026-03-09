@@ -147,43 +147,53 @@ describe("Activity Service", () => {
     });
 
     it("should return user activities sorted by startTime desc", async () => {
-      const activities = await getUserActivities(testUser._id);
+      const result = await getUserActivities(testUser._id);
 
-      expect(activities).toHaveLength(2);
-      expect(activities[0].externalId).toBe("act-2");
-      expect(activities[1].externalId).toBe("act-1");
+      expect(result.activities).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.activities[0].externalId).toBe("act-2");
+      expect(result.activities[1].externalId).toBe("act-1");
     });
 
     it("should exclude deleted activities", async () => {
-      const activities = await getUserActivities(testUser._id);
+      const result = await getUserActivities(testUser._id);
 
-      expect(activities).toHaveLength(2);
-      expect(activities.find((a) => a.externalId === "act-3")).toBeUndefined();
+      expect(result.activities).toHaveLength(2);
+      expect(result.activities.find((a) => a.externalId === "act-3")).toBeUndefined();
     });
 
     it("should filter by sport", async () => {
-      const activities = await getUserActivities(testUser._id, {
+      const result = await getUserActivities(testUser._id, {
         sport: "RUNNING",
       });
 
-      expect(activities).toHaveLength(1);
-      expect(activities[0].sport).toBe("RUNNING");
+      expect(result.activities).toHaveLength(1);
+      expect(result.activities[0].sport).toBe("RUNNING");
     });
 
     it("should filter by date range", async () => {
-      const activities = await getUserActivities(testUser._id, {
+      const result = await getUserActivities(testUser._id, {
         dateFrom: "2024-01-16",
         dateTo: "2024-01-17",
       });
 
-      expect(activities).toHaveLength(1);
-      expect(activities[0].externalId).toBe("act-2");
+      expect(result.activities).toHaveLength(1);
+      expect(result.activities[0].externalId).toBe("act-2");
     });
 
     it("should respect limit parameter", async () => {
-      const activities = await getUserActivities(testUser._id, { limit: 1 });
+      const result = await getUserActivities(testUser._id, { limit: 1 });
 
-      expect(activities).toHaveLength(1);
+      expect(result.activities).toHaveLength(1);
+      expect(result.total).toBe(2);
+    });
+
+    it("should support offset parameter", async () => {
+      const result = await getUserActivities(testUser._id, { limit: 1, offset: 1 });
+
+      expect(result.activities).toHaveLength(1);
+      expect(result.activities[0].externalId).toBe("act-1");
+      expect(result.offset).toBe(1);
     });
   });
 

@@ -26,6 +26,7 @@ router.get("/", protect, async (req, res, next) => {
   try {
     const filters = {
       limit: req.query.limit,
+      offset: req.query.offset,
       sport: req.query.sport,
       dateFrom: req.query.dateFrom,
       dateTo: req.query.dateTo,
