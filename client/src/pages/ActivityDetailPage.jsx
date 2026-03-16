@@ -139,7 +139,7 @@ export default function ActivityDetailPage() {
           <>
             {/* Title */}
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {activity.title || activity.detailedSport || activity.sport}
               </h1>
               <p className="text-gray-500 mt-1">{formatDateTime(activity.startTime)}</p>
@@ -149,7 +149,7 @@ export default function ActivityDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
               <Card className="lg:col-span-3">
                 <CardBody className="p-0">
-                  <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-gray-100">
+                  <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
                     <StatBox
                       label="Duration"
                       value={formatDuration(activity.duration)}

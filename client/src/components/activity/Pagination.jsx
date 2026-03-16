@@ -2,7 +2,7 @@ import { Button } from "../ui";
 
 export default function Pagination({ page, totalPages, onPageChange }) {
   return (
-    <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+    <div className="px-4 sm:px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
       <Button
         variant="secondary"
         size="sm"
@@ -15,7 +15,13 @@ export default function Pagination({ page, totalPages, onPageChange }) {
         Previous
       </Button>
 
-      <div className="flex items-center gap-2">
+      {/* Mobile: page indicator */}
+      <span className="sm:hidden text-sm text-gray-500">
+        {page + 1} / {totalPages}
+      </span>
+
+      {/* Desktop: page number buttons */}
+      <div className="hidden sm:flex items-center gap-2">
         {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
           let pageNum;
           if (totalPages <= 5) {

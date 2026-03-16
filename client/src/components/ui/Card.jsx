@@ -14,12 +14,12 @@ export default function Card({ children, className = "", hover = false }) {
 
 export function CardHeader({ children, className = "" }) {
   return (
-    <div className={`px-6 py-4 border-b border-gray-100 ${className}`}>
+    <div className={`px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 ${className}`}>
       {children}
     </div>
   );
 }
 
 export function CardBody({ children, className = "" }) {
-  return <div className={`p-6 ${className}`}>{children}</div>;
+  return <div className={`p-4 sm:p-6 ${className}`}>{children}</div>;
 }
