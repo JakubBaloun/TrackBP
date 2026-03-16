@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  Brush,
 } from "recharts";
 
 const MAX_POINTS = 300;
@@ -55,6 +56,9 @@ export default function PaceChart({
   hoverTime,
   onHoverTime,
   isRunning = true,
+  brushDomain,
+  onBrushChange,
+  showBrush = false,
 }) {
   const { data, domain, ticks, reversed } = useMemo(() => {
     if (!samples?.length) {
@@ -89,11 +93,9 @@ export default function PaceChart({
     const max = Math.max(...values);
 
     if (isRunning) {
-      // Pace: faster (lower values) at TOP, slower (higher) at BOTTOM
       const domainMin = Math.max(2, Math.floor(min));
       const domainMax = Math.ceil(max) + 1;
 
-      // Ticks from min to max
       const tickValues = [];
       for (let v = domainMin; v <= domainMax; v += 1) {
         tickValues.push(v);
@@ -103,10 +105,9 @@ export default function PaceChart({
         data: chartData,
         domain: [domainMin, domainMax],
         ticks: tickValues,
-        reversed: true, // Invert Y axis
+        reversed: true,
       };
     } else {
-      // Speed: normal axis
       const domainMax = Math.ceil(max / 5) * 5 + 5;
       const tickValues = [];
       for (let v = 0; v <= domainMax; v += 10) {
@@ -123,6 +124,26 @@ export default function PaceChart({
   }, [samples, duration, isRunning]);
 
   const timeTicks = useMemo(() => generateTimeTicks(duration), [duration]);
+
+  // Derive brush indices from brushDomain (time range)
+  const brushIndices = useMemo(() => {
+    if (!brushDomain || !data.length) return {};
+    const startIdx = data.findIndex((d) => d.time >= brushDomain[0]);
+    let endIdx = data.length - 1;
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (data[i].time <= brushDomain[1]) {
+        endIdx = i;
+        break;
+      }
+    }
+    return {
+      startIndex: startIdx >= 0 ? startIdx : 0,
+      endIndex: endIdx,
+    };
+  }, [brushDomain, data]);
+
+  // XAxis domain: use brushDomain if set, else full duration
+  const xDomain = brushDomain ? brushDomain : [0, duration];
 
   // Find hovered value
   const hoverValue = useMemo(() => {
@@ -143,7 +164,6 @@ export default function PaceChart({
     return null;
   }
 
-  // Custom tooltip to capture mouse position
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload?.[0]?.payload) {
       const time = payload[0].payload.time;
@@ -152,6 +172,13 @@ export default function PaceChart({
       }
     }
     return null;
+  };
+
+  const handleBrushChange = ({ startIndex, endIndex }) => {
+    if (!onBrushChange || startIndex == null || endIndex == null) return;
+    const startTime = data[startIndex]?.time ?? 0;
+    const endTime = data[endIndex]?.time ?? duration;
+    onBrushChange([startTime, endTime]);
   };
 
   return (
@@ -177,7 +204,7 @@ export default function PaceChart({
         </div>
       </div>
 
-      <div style={{ height: 140 }}>
+      <div style={{ height: showBrush ? 170 : 140 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
@@ -197,8 +224,10 @@ export default function PaceChart({
             <XAxis
               dataKey="time"
               type="number"
-              domain={[0, duration]}
-              ticks={timeTicks}
+              domain={xDomain}
+              ticks={timeTicks.filter(
+                (t) => t >= xDomain[0] && t <= xDomain[1]
+              )}
               tickFormatter={formatTime}
               stroke="#9ca3af"
               fontSize={11}
@@ -234,6 +263,18 @@ export default function PaceChart({
               connectNulls
               baseValue={domain[1]}
             />
+            {showBrush && (
+              <Brush
+                dataKey="time"
+                height={24}
+                stroke="#e5e7eb"
+                fill="#f9fafb"
+                travellerWidth={6}
+                tickFormatter={formatTime}
+                onChange={handleBrushChange}
+                {...brushIndices}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>

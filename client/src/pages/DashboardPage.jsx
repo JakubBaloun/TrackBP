@@ -5,6 +5,7 @@ import { PageLayout } from "../components/layout";
 import { Alert, FullPageSpinner, useToast } from "../components/ui";
 import { ActivityList, StatsOverview } from "../components/activity";
 import { PolarConnectionCard } from "../components/polar";
+import { VolumeChart } from "../components/charts";
 
 const PAGE_SIZE = 10;
 
@@ -86,6 +87,12 @@ export default function DashboardPage() {
           compact
         />
       </StatsOverview>
+
+      {stats?.recentTrend?.some((d) => d.dailyDistance > 0) && (
+        <div className="mb-6">
+          <VolumeChart recentTrend={stats.recentTrend} />
+        </div>
+      )}
 
       <ActivityList
         activities={activities}

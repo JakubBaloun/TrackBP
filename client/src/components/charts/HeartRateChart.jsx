@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  Brush,
 } from "recharts";
 
 const MAX_POINTS = 300;
@@ -38,6 +39,9 @@ export default function HeartRateChart({
   duration,
   hoverTime,
   onHoverTime,
+  brushDomain,
+  onBrushChange,
+  showBrush = false,
 }) {
   const { data, domain, ticks } = useMemo(() => {
     if (!samples?.length) {
@@ -62,7 +66,6 @@ export default function HeartRateChart({
     const domainMin = Math.floor(min / 10) * 10 - 10;
     const domainMax = Math.ceil(max / 10) * 10 + 10;
 
-    // Generate ticks every 20 bpm
     const tickValues = [];
     for (let v = domainMin; v <= domainMax; v += 20) {
       tickValues.push(v);
@@ -76,6 +79,26 @@ export default function HeartRateChart({
   }, [samples, duration]);
 
   const timeTicks = useMemo(() => generateTimeTicks(duration), [duration]);
+
+  // Derive brush indices from brushDomain (time range)
+  const brushIndices = useMemo(() => {
+    if (!brushDomain || !data.length) return {};
+    const startIdx = data.findIndex((d) => d.time >= brushDomain[0]);
+    let endIdx = data.length - 1;
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (data[i].time <= brushDomain[1]) {
+        endIdx = i;
+        break;
+      }
+    }
+    return {
+      startIndex: startIdx >= 0 ? startIdx : 0,
+      endIndex: endIdx,
+    };
+  }, [brushDomain, data]);
+
+  // XAxis domain: use brushDomain if set, else full duration
+  const xDomain = brushDomain ? brushDomain : [0, duration];
 
   // Find hovered value
   const hoverValue = useMemo(() => {
@@ -96,16 +119,21 @@ export default function HeartRateChart({
     return null;
   }
 
-  // Custom tooltip to capture mouse position
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload?.[0]?.payload) {
       const time = payload[0].payload.time;
-      // Update parent state
       if (time !== hoverTime) {
         setTimeout(() => onHoverTime?.(time), 0);
       }
     }
     return null;
+  };
+
+  const handleBrushChange = ({ startIndex, endIndex }) => {
+    if (!onBrushChange || startIndex == null || endIndex == null) return;
+    const startTime = data[startIndex]?.time ?? 0;
+    const endTime = data[endIndex]?.time ?? duration;
+    onBrushChange([startTime, endTime]);
   };
 
   return (
@@ -129,7 +157,7 @@ export default function HeartRateChart({
         </div>
       </div>
 
-      <div style={{ height: 140 }}>
+      <div style={{ height: showBrush ? 170 : 140 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
@@ -149,8 +177,10 @@ export default function HeartRateChart({
             <XAxis
               dataKey="time"
               type="number"
-              domain={[0, duration]}
-              ticks={timeTicks}
+              domain={xDomain}
+              ticks={timeTicks.filter(
+                (t) => t >= xDomain[0] && t <= xDomain[1]
+              )}
               tickFormatter={formatTime}
               stroke="#9ca3af"
               fontSize={11}
@@ -182,6 +212,18 @@ export default function HeartRateChart({
               }}
               isAnimationActive={false}
             />
+            {showBrush && (
+              <Brush
+                dataKey="time"
+                height={24}
+                stroke="#e5e7eb"
+                fill="#f9fafb"
+                travellerWidth={6}
+                tickFormatter={formatTime}
+                onChange={handleBrushChange}
+                {...brushIndices}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>
