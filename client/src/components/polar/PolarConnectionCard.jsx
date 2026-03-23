@@ -17,33 +17,35 @@ export default function PolarConnectionCard({
     return (
       <Card className="overflow-hidden h-full">
         <div className={`h-1 ${connected ? "bg-green-500" : "bg-gray-200"}`} />
-        <CardBody className="flex flex-col justify-center h-full p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${connected ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
+        <CardBody className="flex flex-col justify-center h-full p-3 sm:p-5">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className={`p-2 rounded-lg flex-shrink-0 ${connected ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}>
                 <PolarLogo />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h2 className="font-semibold text-gray-900 text-sm">Polar</h2>
                 <div className="flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-500" : "bg-gray-300"}`} />
-                  <span className="text-xs text-gray-500">
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${connected ? "bg-green-500" : "bg-gray-300"}`} />
+                  <span className="text-xs text-gray-500 truncate">
                     {connected ? "Connected" : "Not connected"}
                   </span>
                 </div>
               </div>
             </div>
-            {connected ? (
-              <Button onClick={onSync} loading={syncing} variant="secondary" size="sm">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </Button>
-            ) : (
-              <Button onClick={onConnect} size="sm">
-                Connect
-              </Button>
-            )}
+            <div className="flex-shrink-0">
+              {connected ? (
+                <Button onClick={onSync} loading={syncing} variant="secondary" size="sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </Button>
+              ) : (
+                <Button onClick={onConnect} size="sm">
+                  Connect
+                </Button>
+              )}
+            </div>
           </div>
         </CardBody>
       </Card>

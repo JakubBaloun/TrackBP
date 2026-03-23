@@ -33,14 +33,14 @@ const colors = {
 
 function StatItem({ label, value, color }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-xl ${colors[color]}`}>
+    <Card className="p-3 sm:p-5">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <div className={`p-2 sm:p-3 rounded-xl flex-shrink-0 ${colors[color]}`}>
           {icons[color]}
         </div>
-        <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm text-gray-500">{label}</p>
+          <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">{value}</p>
         </div>
       </div>
     </Card>
